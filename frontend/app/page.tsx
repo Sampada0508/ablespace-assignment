@@ -33,6 +33,10 @@ const kanbanColumns: {
     status: 'completed',
     label: 'Completed',
   },
+  {
+    status: 'on-hold',
+    label: 'On Hold',
+  },
 ];
 
 export default function Home() {

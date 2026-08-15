@@ -148,6 +148,7 @@ export default function CreateTaskModal({
                 <option value="todo">To do</option>
                 <option value="in-progress">In progress</option>
                 <option value="completed">Completed</option>
+                <option value="on-hold">On Hold</option>
               </select>
             </div>
           </div>

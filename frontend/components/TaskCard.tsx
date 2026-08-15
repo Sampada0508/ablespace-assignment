@@ -221,6 +221,10 @@ export default function TaskCard({
               <option value="completed">
                 Completed
               </option>
+
+              <option value="on-hold">
+                On Hold
+              </option>
             </select>
           </div>
 
