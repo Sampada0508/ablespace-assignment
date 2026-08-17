@@ -170,7 +170,7 @@ Make sure the following are installed:
 ## 1. Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Sampada0508/ablespace-assignment
 cd ablespace-assignment
 ```
 
@@ -336,13 +336,13 @@ The build should complete successfully before deployment.
 ### Live Application
 
 ```text
-<YOUR_DEPLOYED_URL>
+https://ablespace-frontend-6193.onrender.com/
 ```
 
 ### GitHub Repository
 
 ```text
-<YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
+https://github.com/Sampada0508/ablespace-assignment
 ```
 
 ---
