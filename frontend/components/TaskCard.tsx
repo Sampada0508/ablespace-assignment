@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { deleteTask, updateTask } from '@/lib/api';
 import type { Task } from '@/types/task';
 
@@ -9,6 +10,14 @@ interface TaskCardProps {
   userId: string;
   onUpdated: (task: Task) => void;
   onDeleted: (taskId: string) => void;
+  compact?: boolean;
+
+  showStatus?: boolean;
+  showPriority?: boolean;
+  showMembers?: boolean;
+  showDueDate?: boolean;
+
+  memberName?: string;
 }
 
 export default function TaskCard({
@@ -16,7 +25,17 @@ export default function TaskCard({
   userId,
   onUpdated,
   onDeleted,
+  compact = false,
+
+  showStatus = true,
+  showPriority = true,
+  showMembers = true,
+  showDueDate = true,
+
+  memberName = 'Guest User',
 }: TaskCardProps) {
+  const router = useRouter();
+
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -309,6 +328,53 @@ export default function TaskCard({
   }
 
   // ==================================================
+  // COMPACT ACTIONS
+  // ==================================================
+
+  if (compact) {
+    return (
+      <div className="relative flex justify-end">
+        <button
+          type="button"
+          onClick={() =>
+            setMenuOpen((current) => !current)
+          }
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+          aria-label="Task actions"
+        >
+          ⋯
+        </button>
+
+        {menuOpen && (
+          <div className="absolute right-0 top-9 z-30 w-28 rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(true);
+                setMenuOpen(false);
+              }}
+              className="w-full rounded-md px-3 py-2 text-left text-xs hover:bg-gray-50"
+            >
+              Edit
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="w-full rounded-md px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==================================================
   // NORMAL TASK CARD
   // ==================================================
 
@@ -321,9 +387,13 @@ export default function TaskCard({
 
       <div className="flex items-start justify-between gap-3">
 
-        <h4 className="min-w-0 flex-1 text-sm font-semibold leading-5 text-gray-900">
+        <button
+          type="button"
+          onClick={() => router.push(`/tasks/${task._id}`)}
+          className="min-w-0 flex-1 text-left text-sm font-semibold leading-5 text-gray-900 transition hover:underline"
+        >
           {task.title}
-        </h4>
+        </button>
 
         {/* Three-dot menu */}
 
@@ -391,51 +461,69 @@ export default function TaskCard({
 
         {/* Status */}
 
-        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
-          {getStatusLabel(task.status)}
-        </span>
+        {showStatus && (
+          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+            {getStatusLabel(task.status)}
+          </span>
+        )}
 
         {/* Priority */}
 
-        <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+        {showPriority && (
+          <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
 
-          <span className="flex items-end gap-[2px]">
+            <span className="flex items-end gap-[2px]">
 
-            <span
-              className={`h-1 w-[2px] ${
-                task.priority === 'high'
-                  ? 'bg-red-500'
-                  : task.priority === 'medium'
-                    ? 'bg-orange-400'
-                    : 'bg-gray-400'
-              }`}
-            />
+              <span
+                className={`h-1 w-[2px] ${
+                  task.priority === 'high'
+                    ? 'bg-red-500'
+                    : task.priority === 'medium'
+                      ? 'bg-orange-400'
+                      : 'bg-gray-400'
+                }`}
+              />
 
-            <span
-              className={`h-2 w-[2px] ${
-                task.priority === 'high'
-                  ? 'bg-red-500'
-                  : task.priority === 'medium'
-                    ? 'bg-orange-400'
-                    : 'bg-gray-400'
-              }`}
-            />
+              <span
+                className={`h-2 w-[2px] ${
+                  task.priority === 'high'
+                    ? 'bg-red-500'
+                    : task.priority === 'medium'
+                      ? 'bg-orange-400'
+                      : 'bg-gray-400'
+                }`}
+              />
 
-            <span
-              className={`h-3 w-[2px] ${
-                task.priority === 'high'
-                  ? 'bg-red-500'
-                  : task.priority === 'medium'
-                    ? 'bg-orange-400'
-                    : 'bg-gray-400'
-              }`}
-            />
+              <span
+                className={`h-3 w-[2px] ${
+                  task.priority === 'high'
+                    ? 'bg-red-500'
+                    : task.priority === 'medium'
+                      ? 'bg-orange-400'
+                      : 'bg-gray-400'
+                }`}
+              />
+
+            </span>
+
+            {getPriorityLabel(task.priority)}
 
           </span>
+        )}
 
-          {getPriorityLabel(task.priority)}
+        {/* Members */}
 
-        </span>
+        {showMembers && (
+          <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-300 text-[9px] font-semibold text-gray-700">
+              {memberName.charAt(0).toUpperCase()}
+            </span>
+
+            {memberName}
+
+          </span>
+        )}
 
       </div>
 
@@ -443,7 +531,7 @@ export default function TaskCard({
           DUE DATE
       ================================================== */}
 
-      {task.dueDate && (
+      {showDueDate && task.dueDate && (
         <div className="mt-3">
 
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-500">

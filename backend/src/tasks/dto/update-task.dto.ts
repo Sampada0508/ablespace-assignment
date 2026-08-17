@@ -30,4 +30,14 @@ export class UpdateTaskDto {
   @IsDateString()
   @IsOptional()
   dueDate?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  labels?: string[];
+
+  @IsOptional()
+  resources?: {
+    name: string;
+    url: string;
+  }[];
 }

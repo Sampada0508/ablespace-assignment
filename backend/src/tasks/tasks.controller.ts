@@ -12,6 +12,8 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TasksService } from './tasks.service';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { CreateSubtaskDto } from './dto/create-subtask.dto';
+import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -25,6 +27,65 @@ export class TasksController {
   @Get()
   async findAll(@Query('userId') userId: string) {
     return this.tasksService.findAll(userId);
+  }
+
+
+  @Post(':id/updates')
+  async createUpdate(
+    @Param('id') id: string,
+    @Query('userId') userId: string,
+    @Body() body: {
+      text: string;
+      userName: string;
+    },
+  ) {
+    return this.tasksService.createUpdate(
+      id,
+      userId,
+      body.text,
+      body.userName,
+    );
+  }
+
+  @Post(':id/subtasks')
+  async createSubtask(
+    @Param('id') id: string,
+    @Query('userId') userId: string,
+    @Body() createSubtaskDto: CreateSubtaskDto,
+  ) {
+    return this.tasksService.createSubtask(
+      id,
+      userId,
+      createSubtaskDto,
+    );
+  }
+
+  @Patch(':id/subtasks/:subtaskId')
+  async updateSubtask(
+    @Param('id') id: string,
+    @Param('subtaskId') subtaskId: string,
+    @Query('userId') userId: string,
+    @Body() updateSubtaskDto: UpdateSubtaskDto,
+  ) {
+    return this.tasksService.updateSubtask(
+      id,
+      subtaskId,
+      userId,
+      updateSubtaskDto,
+    );
+  }
+
+  @Delete(':id/subtasks/:subtaskId')
+  async deleteSubtask(
+    @Param('id') id: string,
+    @Param('subtaskId') subtaskId: string,
+    @Query('userId') userId: string,
+  ) {
+    return this.tasksService.deleteSubtask(
+      id,
+      subtaskId,
+      userId,
+    );
   }
 
   @Get(':id')

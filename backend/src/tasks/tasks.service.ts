@@ -75,6 +75,137 @@ export class TasksService {
 }
   
 
+
+  async createUpdate(
+    taskId: string,
+    userId: string,
+    text: string,
+    userName: string,
+  ) {
+    const task = await this.findOne(taskId, userId);
+
+    if (!task.updates) {
+      task.updates = [];
+    }
+
+    task.updates.push({
+      text: text.trim(),
+      userName,
+      createdAt: new Date(),
+    } as any);
+
+    await task.save();
+
+    return task.updates[task.updates.length - 1];
+  }
+
+  async createSubtask(
+    taskId: string,
+    userId: string,
+    subtaskData: {
+      title: string;
+      priority?: string;
+      dueDate?: string;
+    },
+  ) {
+    const task = await this.findOne(taskId, userId);
+
+    if (!task.subtasks) {
+      task.subtasks = [];
+    }
+
+    task.subtasks.push({
+      title: subtaskData.title,
+      priority: (subtaskData.priority as any) || 'medium',
+      dueDate: subtaskData.dueDate
+        ? new Date(subtaskData.dueDate)
+        : undefined,
+      completed: false,
+    } as any);
+
+    await task.save();
+
+    return task.subtasks[task.subtasks.length - 1];
+  }
+
+  async updateSubtask(
+    taskId: string,
+    subtaskId: string,
+    userId: string,
+    updateData: {
+      title?: string;
+      priority?: string;
+      dueDate?: string;
+      completed?: boolean;
+    },
+  ) {
+    const task = await this.findOne(taskId, userId);
+
+    if (!task.subtasks) {
+      throw new NotFoundException('Subtask not found');
+    }
+
+    const subtask = task.subtasks.find(
+      (item: any) =>
+        item._id.toString() === subtaskId,
+    );
+
+    if (!subtask) {
+      throw new NotFoundException('Subtask not found');
+    }
+
+    if (updateData.title !== undefined) {
+      subtask.title = updateData.title;
+    }
+
+    if (updateData.priority !== undefined) {
+      subtask.priority = updateData.priority as any;
+    }
+
+    if (updateData.dueDate !== undefined) {
+      subtask.dueDate = updateData.dueDate
+        ? new Date(updateData.dueDate)
+        : undefined;
+    }
+
+    if (updateData.completed !== undefined) {
+      subtask.completed = updateData.completed;
+    }
+
+    await task.save();
+
+    return subtask;
+  }
+
+  async deleteSubtask(
+    taskId: string,
+    subtaskId: string,
+    userId: string,
+  ) {
+    const task = await this.findOne(taskId, userId);
+
+    if (!task.subtasks) {
+      throw new NotFoundException('Subtask not found');
+    }
+
+    const subtaskIndex = task.subtasks.findIndex(
+      (item: any) =>
+        item._id.toString() === subtaskId,
+    );
+
+    if (subtaskIndex === -1) {
+      throw new NotFoundException('Subtask not found');
+    }
+
+    task.subtasks.splice(subtaskIndex, 1);
+
+    await task.save();
+
+    return {
+      message: 'Subtask deleted successfully',
+    };
+  }
+
  async remove(id: string, userId: string): Promise<void> {
   const result = await this.taskModel.deleteOne({
     _id: new Types.ObjectId(id),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import CreateTaskModal from '@/components/CreateTaskModal';
 import GuestLogin from '@/components/GuestLogin';
@@ -16,6 +17,34 @@ interface User {
 }
 
 type StatusFilter = 'all' | Task['status'];
+type ViewMode = 'board' | 'list';
+
+type VisibleFields = {
+  status: boolean;
+  priority: boolean;
+  members: boolean;
+  dueDate: boolean;
+};
+type Theme =
+  | 'amber'
+  | 'blue'
+  | 'pink'
+  | 'rose'
+  | 'emerald'
+  | 'black';
+
+const themes: {
+  id: Theme;
+  label: string;
+  color: string;
+}[] = [
+  { id: 'amber', label: 'Amber', color: '#f59e0b' },
+  { id: 'blue', label: 'Blue', color: '#3b82f6' },
+  { id: 'pink', label: 'Pink', color: '#ec4899' },
+  { id: 'rose', label: 'Rose', color: '#f43f5e' },
+  { id: 'emerald', label: 'Emerald', color: '#10b981' },
+  { id: 'black', label: 'Black', color: '#111827' },
+];
 
 const kanbanColumns: {
   status: Task['status'];
@@ -40,7 +69,9 @@ const kanbanColumns: {
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const [checkingUser, setCheckingUser] = useState(true);
@@ -48,11 +79,27 @@ export default function Home() {
 
   const [showCreateModal, setShowCreateModal] =
     useState(false);
+    const [theme, setTheme] = useState<Theme>('blue');
+const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFields, setShowFields] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+
+  const [visibleFields, setVisibleFields] = useState({
+    priority: true,
+    members: true,
+    dueDate: true,
+    status: true,
+  });
 
   const [statusFilter, setStatusFilter] =
     useState<StatusFilter>('all');
+    const [viewMode, setViewMode] =
+  useState<ViewMode>('board');
+
+
 
   // ==================================================
   // CHECK LOGGED-IN USER
@@ -60,6 +107,11 @@ export default function Home() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
+    const savedAvatar = localStorage.getItem('profileAvatar');
+
+    if (savedAvatar) {
+      setAvatarUrl(savedAvatar);
+    }
 
     if (savedUser) {
       try {
@@ -71,6 +123,27 @@ export default function Home() {
 
     setCheckingUser(false);
   }, []);
+
+  // ==================================================
+// LOAD SAVED THEME
+// ==================================================
+
+useEffect(() => {
+  const savedTheme = localStorage.getItem('theme');
+
+  if (
+    savedTheme &&
+    themes.some(
+      (currentTheme) => currentTheme.id === savedTheme,
+    )
+  ) {
+    setTheme(savedTheme as Theme);
+    document.documentElement.dataset.theme = savedTheme;
+  } else {
+    localStorage.setItem('theme', 'blue');
+    document.documentElement.dataset.theme = 'blue';
+  }
+}, []);
 
   // ==================================================
   // LOAD TASKS
@@ -202,6 +275,18 @@ export default function Home() {
     );
   }
 
+  function handleThemeChange(newTheme: Theme) {
+
+  setTheme(newTheme);
+
+  localStorage.setItem('theme', newTheme);
+
+  document.documentElement.dataset.theme = newTheme;
+
+  setShowThemeMenu(false);
+
+}
+
   // ==================================================
   // DASHBOARD
   // ==================================================
@@ -213,184 +298,208 @@ export default function Home() {
           SIDEBAR
       ================================================== */}
 
-      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-gray-200 bg-white lg:block">
-        <div className="flex h-full flex-col p-6">
+        {/* SIDEBAR */}
 
-          {/* Logo */}
+        <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-gray-200 bg-white lg:block">
 
-          <div className="mb-10">
-            <h1 className="text-2xl font-bold tracking-tight">
-              AbleSpace
-            </h1>
+          <div className="flex h-full flex-col px-5 py-6">
 
-            <p className="mt-1 text-sm text-gray-500">
-              Task management
-            </p>
+            {/* USER */}
+
+            <button
+              type="button"
+              onClick={() => router.push('/profile')}
+              className="mb-8 flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-gray-50"
+            >
+
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold text-white"
+                style={{
+                  backgroundColor: 'var(--theme-primary)',
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  {user.name}
+                </p>
+
+                <p className="mt-1 truncate text-xs text-gray-400">
+                  {user.guestId}
+                </p>
+
+              </div>
+
+              <span className="text-gray-400">
+                ⌃
+              </span>
+
+            </button>
+
+            {/* WORKSPACE */}
+
+            <div>
+
+              <div className="mb-3 flex items-center justify-between px-2">
+
+                <p className="text-sm font-semibold text-gray-700">
+                  Workspace
+                </p>
+
+                <span className="text-gray-400">
+                  ⌄
+                </span>
+
+              </div>
+
+              <nav className="space-y-1">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    document
+                      .getElementById('tasks-section')
+                      ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      });
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold"
+                  style={{
+                    color: 'var(--theme-primary)',
+                    backgroundColor: 'color-mix(in srgb, var(--theme-primary) 8%, white)',
+                  }}
+                >
+                  <span>▦</span>
+                  Tasks
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => router.push('/projects')}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-gray-600 transition hover:bg-gray-100"
+                >
+                  <span className="text-gray-400">▱</span>
+                  Projects
+                </button>
+
+              </nav>
+
+            </div>
+
+            {/* BOTTOM */}
+
+            <div className="mt-auto space-y-2 border-t border-gray-200 pt-5">
+
+              <button
+                type="button"
+                onClick={() => router.push('/profile')}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-gray-600 transition hover:bg-gray-100"
+              >
+                <span>♙</span>
+                Profile
+              </button>
+
+              <div className="relative">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowThemeMenu((current) => !current)
+                  }
+                  className="flex w-full items-center justify-between rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium transition hover:bg-gray-50"
+                >
+
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-xs text-white">
+                      N
+                    </span>
+
+                    Change Theme
+                  </span>
+
+                  <span className="text-gray-400">
+                    {showThemeMenu ? '⌃' : '›'}
+                  </span>
+
+                </button>
+
+                {showThemeMenu && (
+                  <div className="absolute bottom-full left-0 mb-2 w-full rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
+
+                    <p className="px-2 py-1.5 text-xs font-medium text-gray-400">
+                      Color Mode
+                    </p>
+
+                    {themes.map((currentTheme) => (
+                      <button
+                        key={currentTheme.id}
+                        type="button"
+                        onClick={() =>
+                          handleThemeChange(currentTheme.id)
+                        }
+                        className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm transition hover:bg-gray-50"
+                      >
+
+                        <span className="flex items-center gap-2">
+
+                          <span
+                            className="h-3 w-3 rounded-full border border-gray-200"
+                            style={{
+                              backgroundColor:
+                                currentTheme.color,
+                            }}
+                          />
+
+                          {currentTheme.label}
+
+                        </span>
+
+                        {theme === currentTheme.id && (
+                          <span className="font-semibold">
+                            ✓
+                          </span>
+                        )}
+
+                      </button>
+                    ))}
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
           </div>
 
-          {/* Navigation */}
-
-          <nav className="space-y-2">
-
-            <button
-              type="button"
-              className="w-full rounded-xl bg-black px-4 py-3 text-left text-sm font-medium text-white"
-            >
-              Dashboard
-            </button>
-
-            <button
-              type="button"
-              className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-600 transition hover:bg-gray-100"
-            >
-              Tasks
-            </button>
-
-            <button
-              type="button"
-              className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-600 transition hover:bg-gray-100"
-            >
-              Projects
-            </button>
-
-          </nav>
-
-          {/* User */}
-
-          <div className="mt-auto border-t border-gray-200 pt-5">
-
-            <p className="text-xs text-gray-400">
-              Signed in as
-            </p>
-
-            <p className="mt-1 text-sm font-medium">
-              {user.name}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              {user.guestId}
-            </p>
-
-          </div>
-
-        </div>
-      </aside>
-
-      {/* ==================================================
-          MAIN CONTENT
-      ================================================== */}
+        </aside>
+        {/* MAIN CONTENT */}
 
       <section className="lg:ml-64">
 
         <div className="mx-auto max-w-7xl px-6 py-8 sm:px-8 lg:px-10">
 
-          {/* ==================================================
-              HEADER
-          ================================================== */}
-
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
-            <div>
-
-              <p className="text-sm font-medium text-gray-500">
-                Welcome back, {user.name}
-              </p>
-
-              <h2 className="mt-1 text-3xl font-bold tracking-tight">
-                Your tasks
-              </h2>
-
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowCreateModal(true)
-              }
-              className="rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-            >
-              + New Task
-            </button>
-
-          </header>
-
-          {/* ==================================================
-              STATISTICS
-          ================================================== */}
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-            {/* Total */}
-
-            <div className="rounded-2xl border border-gray-200 bg-white p-5">
-
-              <p className="text-sm text-gray-500">
-                Total tasks
-              </p>
-
-              <p className="mt-2 text-3xl font-bold">
-                {loadingTasks
-                  ? '...'
-                  : totalTasks}
-              </p>
-
-            </div>
-
-            {/* To Do */}
-
-            <div className="rounded-2xl border border-gray-200 bg-white p-5">
-
-              <p className="text-sm text-gray-500">
-                To do
-              </p>
-
-              <p className="mt-2 text-3xl font-bold">
-                {loadingTasks
-                  ? '...'
-                  : todoTasks}
-              </p>
-
-            </div>
-
-            {/* Doing */}
-
-            <div className="rounded-2xl border border-gray-200 bg-white p-5">
-
-              <p className="text-sm text-gray-500">
-                Doing
-              </p>
-
-              <p className="mt-2 text-3xl font-bold">
-                {loadingTasks
-                  ? '...'
-                  : inProgressTasks}
-              </p>
-
-            </div>
-
-            {/* Completed */}
-
-            <div className="rounded-2xl border border-gray-200 bg-white p-5">
-
-              <p className="text-sm text-gray-500">
-                Completed
-              </p>
-
-              <p className="mt-2 text-3xl font-bold">
-                {loadingTasks
-                  ? '...'
-                  : completedTasks}
-              </p>
-
-            </div>
-
-          </div>
 
           {/* ==================================================
               TASK SECTION
           ================================================== */}
 
-          <section className="mt-8 rounded-2xl border border-gray-200 bg-white">
+          <section
+            id="tasks-section"
+            className="mt-5 rounded-2xl border border-gray-200 bg-white"
+          >
 
             {/* ==================================================
                 TASK HEADER
@@ -412,59 +521,205 @@ export default function Home() {
 
                 </div>
 
-                {/* Search + Filter */}
+                {/* Toolbar */}
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex items-center gap-2">
 
-                  <input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) =>
-                      setSearchQuery(
-                        e.target.value,
-                      )
-                    }
-                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-gray-400"
-                  />
+                  {/* Search */}
 
-                  <select
-                    value={statusFilter}
-                    onChange={(e) =>
-                      setStatusFilter(
-                        e.target.value as StatusFilter,
-                      )
-                    }
-                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none"
+                  <div className="relative">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowSearch((current) => !current)
+                      }
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50"
+                      aria-label="Search"
+                    >
+                      ⌕
+                    </button>
+
+                    {showSearch && (
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Search tasks..."
+                        value={searchQuery}
+                        onChange={(e) =>
+                          setSearchQuery(e.target.value)
+                        }
+                        className="absolute right-0 top-12 z-30 w-64 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-lg outline-none focus:border-gray-400"
+                      />
+                    )}
+
+                  </div>
+
+                  {/* Fields */}
+
+                  <div className="relative">
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFields((current) => !current);
+                        setShowFilter(false);
+                      }}
+                      className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                    >
+                      ▥
+                      <span>Fields</span>
+                    </button>
+
+                    {showFields && (
+                      <div className="absolute right-0 top-12 z-40 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+
+                        {/* List / Board */}
+
+                        <div className="mb-4 flex overflow-hidden rounded-lg border border-gray-200">
+
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('list')}
+                            className={`flex-1 px-4 py-2 text-sm font-medium ${
+                              viewMode === 'list'
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'text-gray-500'
+                            }`}
+                          >
+                            ☰ List
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('board')}
+                            className={`flex-1 px-4 py-2 text-sm font-medium ${
+                              viewMode === 'board'
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'text-gray-500'
+                            }`}
+                          >
+                            ▦ Board
+                          </button>
+
+                        </div>
+
+                        <div className="space-y-1">
+
+                          {[
+                            ['priority', 'Priority'],
+                            ['members', 'Members'],
+                            ['dueDate', 'Due Date'],
+                            ['status', 'Status'],
+                          ].map(([field, label]) => {
+
+                            const key =
+                              field as keyof VisibleFields;
+
+                            return (
+                              <button
+                                key={field}
+                                type="button"
+                                onClick={() =>
+                                  setVisibleFields((current) => ({
+                                    ...current,
+                                    [key]: !current[key],
+                                  }))
+                                }
+                                className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm transition hover:bg-gray-50"
+                              >
+
+                                <span>
+                                  {label}
+                                </span>
+
+                                {visibleFields[key] ? (
+                                  <span className="flex h-4 w-4 items-center justify-center rounded bg-gray-900 text-[10px] text-white">
+                                    ✓
+                                  </span>
+                                ) : (
+                                  <span className="h-4 w-4 rounded bg-gray-200" />
+                                )}
+
+                              </button>
+                            );
+                          })}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Filter */}
+
+                  <div className="relative">
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFilter((current) => !current);
+                        setShowFields(false);
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50"
+                      aria-label="Filter"
+                    >
+                      ▽
+                    </button>
+
+                    {showFilter && (
+                      <div className="absolute right-0 top-12 z-40 w-48 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
+
+                        {[
+                          ['all', 'All tasks'],
+                          ['todo', 'To Do'],
+                          ['in-progress', 'Doing'],
+                          ['completed', 'Completed'],
+                          ['on-hold', 'On Hold'],
+                        ].map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter(value as StatusFilter);
+                              setShowFilter(false);
+                            }}
+                            className={`w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-gray-50 ${
+                              statusFilter === value
+                                ? 'font-semibold bg-gray-100'
+                                : ''
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Add Task */}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(true)}
+                    className="h-10 rounded-xl px-5 text-sm font-semibold text-white transition hover:opacity-90"
+                    style={{
+                      backgroundColor: 'var(--theme-primary)',
+                    }}
                   >
-
-                    <option value="all">
-                      All tasks
-                    </option>
-
-                    <option value="todo">
-                      To Do
-                    </option>
-
-                    <option value="in-progress">
-                      Doing
-                    </option>
-
-                    <option value="completed">
-                      Completed
-                    </option>
-
-                    <option value="on-hold">
-                      On Hold
-                    </option>
-
-                  </select>
+                    + Add Task
+                  </button>
 
                 </div>
 
               </div>
 
             </div>
+              {/* ONLY TASK CONTENT SCROLLS */}
+              <div className="max-h-[calc(100vh-210px)] overflow-y-auto overflow-x-hidden">
 
             {/* ==================================================
                 LOADING
@@ -506,7 +761,10 @@ export default function Home() {
                     onClick={() =>
                       setShowCreateModal(true)
                     }
-                    className="mt-5 rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                    className="mt-5 rounded-xl px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+style={{
+  backgroundColor: 'var(--theme-primary)',
+}}
                   >
                     Create your first task
                   </button>
@@ -543,7 +801,10 @@ export default function Home() {
                       setSearchQuery('');
                       setStatusFilter('all');
                     }}
-                    className="mt-5 rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                    className="mt-5 rounded-xl px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+style={{
+  backgroundColor: 'var(--theme-primary)',
+}}
                   >
                     Clear filters
                   </button>
@@ -559,9 +820,15 @@ export default function Home() {
             {!loadingTasks &&
               filteredTasks.length > 0 && (
 
-                <div className="overflow-x-auto p-5 sm:p-6">
+                <div className="p-5 sm:p-6">
 
-                  <div className="grid min-w-[1100px] grid-cols-4 gap-4">
+                  {/* Board View */}
+
+                  {viewMode === 'board' && (
+
+                    <div className="overflow-x-auto">
+
+                      <div className="grid min-w-[1100px] grid-cols-4 gap-4">
 
                     {kanbanColumns.map(
                       (column) => {
@@ -610,6 +877,24 @@ export default function Home() {
                                     onDeleted={
                                       handleTaskDeleted
                                     }
+
+                                    showStatus={
+                                      visibleFields.status
+                                    }
+
+                                    showPriority={
+                                      visibleFields.priority
+                                    }
+
+                                    showMembers={
+                                      visibleFields.members
+                                    }
+
+                                    showDueDate={
+                                      visibleFields.dueDate
+                                    }
+
+                                    memberName={user.name}
                                   />
 
                                 ),
@@ -636,12 +921,277 @@ export default function Home() {
                       },
                     )}
 
-                  </div>
+                      </div>
+
+                    </div>
+
+                  )}
+
+                  {/* List View */}
+
+                  {viewMode === 'list' && (
+
+                    <div className="space-y-6">
+
+                      {kanbanColumns.map((column) => {
+
+                        const columnTasks =
+                          filteredTasks.filter(
+                            (task) =>
+                              task.status === column.status,
+                          );
+
+                        const gridColumns = [
+                          'minmax(280px, 2fr)',
+                          visibleFields.priority ? '140px' : '',
+                          visibleFields.members ? '150px' : '',
+                          visibleFields.dueDate ? '150px' : '',
+                          '70px',
+                        ]
+                          .filter(Boolean)
+                          .join(' ');
+
+                        return (
+
+                          <section
+                            key={column.status}
+                            className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                          >
+
+                            {/* Section Header */}
+
+                            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
+
+                              <span className="text-xs text-gray-500">
+                                ▾
+                              </span>
+
+                              <h4 className="text-sm font-semibold text-gray-800">
+                                {column.label}
+                              </h4>
+
+                              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-500">
+                                {columnTasks.length}
+                              </span>
+
+                            </div>
+
+                            <div className="overflow-x-auto">
+
+                              <div className="min-w-[650px]">
+
+                                {/* Table Header */}
+
+                                <div
+                                  className="grid items-center border-b border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-gray-500"
+                                  style={{
+                                    gridTemplateColumns: gridColumns,
+                                  }}
+                                >
+
+                                  <div>
+                                    Task
+                                  </div>
+
+                                  {visibleFields.priority && (
+                                    <div>
+                                      Priority
+                                    </div>
+                                  )}
+
+                                  {visibleFields.members && (
+                                    <div>
+                                      Members
+                                    </div>
+                                  )}
+
+                                  {visibleFields.dueDate && (
+                                    <div>
+                                      Due Date
+                                    </div>
+                                  )}
+
+                                  <div className="text-center">
+                                    Actions
+                                  </div>
+
+                                </div>
+
+                                {/* Rows */}
+
+                                {columnTasks.map((task) => (
+
+                                  <div
+                                    key={task._id}
+                                    className="grid min-h-[64px] items-center border-b border-gray-100 px-4 py-3 last:border-b-0 transition hover:bg-gray-50"
+                                    style={{
+                                      gridTemplateColumns: gridColumns,
+                                    }}
+                                  >
+
+                                    {/* Task */}
+
+                                    <div className="min-w-0 pr-4">
+
+                                      <p className="truncate text-sm font-medium text-gray-800">
+                                        {task.title}
+                                      </p>
+
+                                      {task.description && (
+                                        <p className="mt-1 truncate text-xs text-gray-400">
+                                          {task.description}
+                                        </p>
+                                      )}
+
+                                    </div>
+
+                                    {/* Priority */}
+
+                                    {visibleFields.priority && (
+                                      <div>
+
+                                        <span
+                                          className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+                                            task.priority === 'high'
+                                              ? 'text-red-500'
+                                              : task.priority === 'medium'
+                                                ? 'text-orange-500'
+                                                : 'text-gray-400'
+                                          }`}
+                                        >
+
+                                          <span className="text-[10px]">
+                                            ▂▅▇
+                                          </span>
+
+                                          {task.priority === 'high'
+                                            ? 'High'
+                                            : task.priority === 'medium'
+                                              ? 'Medium'
+                                              : 'Low'}
+
+                                        </span>
+
+                                      </div>
+                                    )}
+
+                                    {/* Members */}
+
+                                    {visibleFields.members && (
+                                      <div>
+
+                                        <div className="flex items-center">
+
+                                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+                                            {user.name
+                                              .charAt(0)
+                                              .toUpperCase()}
+                                          </div>
+
+                                        </div>
+
+                                      </div>
+                                    )}
+
+                                    {/* Due Date */}
+
+                                    {visibleFields.dueDate && (
+                                      <div>
+
+                                        {task.dueDate ? (
+
+                                          <span
+                                            className={`text-xs ${
+                                              new Date(task.dueDate) <
+                                              new Date()
+                                                ? 'text-red-500'
+                                                : 'text-gray-500'
+                                            }`}
+                                          >
+
+                                            {new Date(
+                                              task.dueDate,
+                                            ).toLocaleDateString(
+                                              'en-GB',
+                                              {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric',
+                                              },
+                                            )}
+
+                                          </span>
+
+                                        ) : (
+
+                                          <span className="text-xs text-gray-400">
+                                            —
+                                          </span>
+
+                                        )}
+
+                                      </div>
+                                    )}
+
+                                    {/* Actions */}
+
+                                    <div className="flex justify-center">
+
+                                      <TaskCard
+                                        task={task}
+                                        userId={user._id}
+                                        onUpdated={
+                                          handleTaskUpdated
+                                        }
+                                        onDeleted={
+                                          handleTaskDeleted
+                                        }
+                                        compact
+                                      />
+
+                                    </div>
+
+                                  </div>
+
+                                ))}
+
+                                {/* Add Task */}
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setShowCreateModal(true)
+                                  }
+                                  className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                                >
+
+                                  <span className="text-lg leading-none">
+                                    +
+                                  </span>
+
+                                  Add Task
+
+                                </button>
+
+                              </div>
+
+                            </div>
+
+                          </section>
+
+                        );
+
+                      })}
+
+                    </div>
+
+                  )}
 
                 </div>
 
               )}
 
+              </div>
           </section>
 
         </div>
