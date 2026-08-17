@@ -122,3 +122,249 @@ AbleSpace Assignment
             ├── schemas/
             ├── tasks.controller.ts
             └── tasks.service.ts
+```
+
+---
+
+## 🔄 Application Flow
+
+```text
+User
+ │
+ ▼
+Next.js Frontend
+ │
+ ├── Dashboard
+ ├── Tasks
+ ├── Projects
+ └── Profile
+ │
+ ▼
+REST API
+ │
+ ▼
+NestJS Backend
+ │
+ ├── Tasks
+ ├── Subtasks
+ └── Projects
+ │
+ ▼
+MongoDB
+```
+
+---
+
+# 🚀 Getting Started
+
+## Prerequisites
+
+Make sure the following are installed:
+
+- Node.js
+- npm
+- MongoDB
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd ablespace-assignment
+```
+
+---
+
+## 2. Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+---
+
+## 3. Install Backend Dependencies
+
+```bash
+cd ../backend
+npm install
+```
+
+---
+
+## 4. Configure Environment Variables
+
+The backend uses MongoDB for data persistence.
+
+For local development:
+
+```env
+MONGODB_URI=mongodb://127.0.0.1:27017/ablespace
+PORT=4000
+```
+
+> Do not commit environment files containing secrets.
+
+---
+
+## 5. Start the Backend
+
+```bash
+cd backend
+npm run start:dev
+```
+
+The backend will run at:
+
+```text
+http://localhost:4000
+```
+
+---
+
+## 6. Start the Frontend
+
+Open another terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend will run at:
+
+```text
+http://localhost:3000
+```
+
+Open `http://localhost:3000` in your browser.
+
+---
+
+# 📌 Key Functional Areas
+
+## Dashboard
+
+The dashboard provides an overview of tasks through:
+
+- Task statistics
+- Kanban board
+- Task filtering
+- Search
+- List/Board switching
+- Field visibility controls
+- Independent task-list scrolling
+
+The task content area uses an independent scroll region so the dashboard header and statistics remain stable while navigating through a large number of tasks.
+
+---
+
+## Task Management
+
+Each task can contain:
+
+- Title
+- Description
+- Status
+- Priority
+- Due date
+- Members
+- Subtasks
+
+Task operations communicate with the backend through REST APIs.
+
+---
+
+## Projects
+
+The Projects section provides a dedicated workspace for organizing projects separately from individual tasks.
+
+Projects can be managed independently while maintaining the same workspace experience as the main task dashboard.
+
+---
+
+## Profile
+
+The Profile section allows users to manage:
+
+- Profile picture
+- Email
+- Full name
+- Username
+- Theme
+- Accent color
+
+Profile preferences are persisted locally so they remain available after navigation and refresh.
+
+---
+
+# 💡 Design Decisions
+
+## Independent Task Scrolling
+
+The dashboard keeps the main workspace stable while allowing the task list or board to scroll independently.
+
+This prevents users from repeatedly scrolling past the dashboard header and statistics when working with many tasks.
+
+## Reusable Components
+
+Task rendering and task actions use reusable components such as `TaskCard`, helping maintain consistency across different task views.
+
+## Persistent Preferences
+
+Theme, accent color, profile avatar, and profile information are persisted locally so that user preferences remain available after navigation and refresh.
+
+---
+
+# 🧪 Build Verification
+
+The frontend production build can be verified with:
+
+```bash
+cd frontend
+npm run build
+```
+
+The build should complete successfully before deployment.
+
+---
+
+# 🌐 Deployment
+
+### Live Application
+
+```text
+<YOUR_DEPLOYED_URL>
+```
+
+### GitHub Repository
+
+```text
+<YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
+```
+
+---
+
+# 🔮 Future Improvements
+
+- Authentication and authorization
+- Real user accounts
+- Team/member management
+- Drag-and-drop task ordering
+- Real-time task updates
+- Notifications
+- Advanced project analytics
+- Task activity history
+- Improved accessibility
+- Automated testing
+- Production monitoring
+
+---
+
+# 👩‍💻 Author
+
+**Sampada N. S.**
+
+Built as part of the AbleSpace engineering assignment.
